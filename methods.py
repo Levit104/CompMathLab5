@@ -27,40 +27,42 @@ class Lagrange(Method):
         return res
 
 
-def gauss_left(y_values, n, finite_diffs, i_center, t):
-    res = y_values[i_center]
-    for i in range(1, n):
-        index = (i + 1) // 2
-        t_prod = 1
-        # print(index)
-        for j in range(-index + 1, (i // 2) + 1):
-            # print('gauss_left', j)
-            t_prod *= (t + j)
-        delta_y = finite_diffs[i][i_center - index]
-        res += t_prod * delta_y / math.factorial(i)
-    return res
-
-
 def gauss_right(y_values, n, finite_diffs, i_center, t):
     res = y_values[i_center]
     for i in range(1, n):
         index = i // 2
         t_prod = 1
-        # print(index)
         for j in range(-index, (i + 1) // 2):
-            # print('gauss_right', j)
             t_prod *= (t + j)
         delta_y = finite_diffs[i][i_center - index]
         res += t_prod * delta_y / math.factorial(i)
     return res
 
 
+def gauss_left(y_values, n, finite_diffs, i_center, t):
+    res = y_values[i_center]
+    for i in range(1, n):
+        index = (i + 1) // 2
+        t_prod = 1
+        for j in range(-index + 1, (i // 2) + 1):
+            t_prod *= (t + j)
+        delta_y = finite_diffs[i][i_center - index]
+        res += t_prod * delta_y / math.factorial(i)
+    return res
+
+
+def validate(points_number, x_values, odd=True):
+    if odd and points_number % 2 == 0:
+        raise InterpolationError('кол-во узлов должно быть нечётным')
+    if not odd and points_number % 2 != 0:
+        raise InterpolationError('кол-во узлов должно быть чётным')
+    if not equally_spaced(x_values):
+        raise InterpolationError('узлы должны быть равностоящими')
+
+
 class Gauss(Method):
     def __call__(self, x_values, y_values, n, x, finite_diffs, check_t=None):
-        if n % 2 == 0:
-            raise InterpolationError('кол-во узлов должно быть нечётным')
-        if not equally_spaced(x_values):
-            raise InterpolationError('узлы должны быть равностоящими')
+        validate(n, x_values)
 
         i_center = (n - 1) // 2
         a = x_values[i_center]
@@ -77,10 +79,7 @@ class Gauss(Method):
 
 class Stirling(Method):
     def __call__(self, x_values, y_values, n, x, finite_diffs, check_t=None):
-        if n % 2 == 0:
-            raise InterpolationError('кол-во узлов должно быть нечётным')
-        if not equally_spaced(x_values):
-            raise InterpolationError('узлы должны быть равностоящими')
+        validate(n, x_values)
 
         i_center = (n - 1) // 2
         a = x_values[i_center]
@@ -93,16 +92,14 @@ class Stirling(Method):
         if x == a:
             return y_values[i_center]
         else:
-            return (gauss_left(y_values, n, finite_diffs, i_center, t)
-                    + gauss_right(y_values, n, finite_diffs, i_center, t)) / 2
+            right = gauss_right(y_values, n, finite_diffs, i_center, t)
+            left = gauss_left(y_values, n, finite_diffs, i_center, t)
+            return (right + left) / 2
 
 
 class Bessel(Method):
     def __call__(self, x_values, y_values, n, x, finite_diffs, check_t=True):
-        if n % 2 != 0:
-            raise InterpolationError('кол-во узлов должно быть чётным')
-        if not equally_spaced(x_values):
-            raise InterpolationError('узлы должны быть равностоящими')
+        validate(n, x_values, odd=False)
 
         i_center = (n - 1) // 2
         a = x_values[i_center]
@@ -113,7 +110,6 @@ class Bessel(Method):
             raise InterpolationError(f't = {t} не входит в диапазон 0.25 <= |t| <= 0.75')
 
         res = (y_values[i_center] + y_values[i_center + 1]) / 2
-
         for i in range(1, n):
             index = i // 2
             if i % 2 == 1:
@@ -121,7 +117,7 @@ class Bessel(Method):
             else:
                 t_prod = (finite_diffs[i][i_center - index] + finite_diffs[i][i_center - index + 1]) / 2
             for j in range(i // 2):
-                t_prod *= (t + j) * (t - j - 1)
+                t_prod *= (t - j) * (t + j - 1)
             res += t_prod / math.factorial(i)
 
         return res

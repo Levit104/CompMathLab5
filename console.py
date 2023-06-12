@@ -56,7 +56,7 @@ def print_matrix(matrix, name):
                 else:
                     print(f'{val:^8}', end='\t')
             elif val is not None:
-                if int(val) == val:
+                if type(val) is int:
                     print(f'{val}', end='\t')
                 else:
                     print(f'{val:=8.5f}', end='\t')

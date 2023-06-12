@@ -14,7 +14,7 @@ if __name__ == '__main__':
 
             points_number, points = get_data(input_id)
             sort_by_column(points, col=0)
-            print(f'Кол-во точек: {points_number}')
+            print(f'\nКол-во точек: {points_number}')
             print_matrix(points, 'Значения X и Y')
 
             x_values, y_values = separate_columns(points)
@@ -22,8 +22,6 @@ if __name__ == '__main__':
             if has_duplicates(x_values):
                 print('\nЗначения X должны быть уникальными. Повторите ввод')
                 continue
-
-            x = get_x(min_val=min(x_values), max_val=max(x_values))
 
             plt.scatter(x_values, y_values, label='Исходные данные')
             plt.xlabel('X')
@@ -33,6 +31,8 @@ if __name__ == '__main__':
 
             finite_diffs = get_finite_diffs(y_values, points_number)
             print_matrix(extend_finite_diffs(transpose_matrix(finite_diffs), x_values), 'Конечные разности')
+
+            x = get_x(min_val=min(x_values), max_val=max(x_values))
 
             methods_diffs_dict = {}
 
