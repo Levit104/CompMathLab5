@@ -2,7 +2,7 @@ import math
 
 
 class Function:
-    def __call__(self, x):
+    def __call__(self, x: float) -> float:
         pass
 
 
@@ -30,7 +30,7 @@ class Function3(Function):
         return '20 * cos(x) + x^2'
 
 
-functions_dict = {
+functions_dict: dict[int, Function] = {
     1: Function1(),
     2: Function2(),
     3: Function3()

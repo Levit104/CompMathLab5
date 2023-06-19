@@ -1,36 +1,59 @@
-import itertools
 import math
+from itertools import zip_longest
+from typing import Any
+from tabulate import tabulate
 
 
-def get_finite_diffs(y, n):
-    diff = [[yi for yi in y]]
+def calculate_finite_diffs(y_values: list[float], n: int) -> list[list[float]]:
+    diffs: list[list[float]] = [[y for y in y_values]]
     for i in range(1, n):
-        row = []
+        row: list[float] = []
         for j in range(n - i):
-            row.append(diff[i - 1][j + 1] - diff[i - 1][j])
-        diff.append(row)
-    return diff
+            row.append(diffs[i - 1][j + 1] - diffs[i - 1][j])
+        diffs.append(row)
+    return diffs
 
 
-def transpose_matrix(matrix):
-    return [list(row) for row in itertools.zip_longest(*matrix)]
+def print_finite_diffs(x_values: list[float],
+                       finite_diffs: list[list[float]],
+                       points_number: int,
+                       table_format: str = 'fancy_grid',
+                       float_format: str = '.5f',
+                       align: str = 'decimal',
+                       show_index: bool = True) -> None:
+    table: list[list[float]] = transpose([x_values] + finite_diffs)
+    headers: list[str] = ['i', 'x', 'y', 'Δy'] + [f'Δy^{i}' for i in range(2, points_number)]
+    print(f'\nКонечные разности:'
+          f'\n{table_to_string(table, headers, table_format, float_format, align, show_index)}')
 
 
-def separate_columns(matrix):
-    return [list(row) for row in zip(*matrix)]
+def print_methods_diffs(diffs_dict: dict[str, float], float_format: str) -> None:
+    if len(diffs_dict) < 2:
+        return
+    print()  # отступ
+    printed: list[str] = []
+    for name1, value1 in diffs_dict.items():
+        for name2, value2 in diffs_dict.items():
+            if name1 != name2 and f'({name2}) и ({name1})' not in printed:
+                printed.append(f'({name1}) и ({name2})')
+                print(f'Разница между ({name1}) и ({name2}): {abs(value1 - value2):{float_format}}')
 
 
-def has_duplicates(lst):
+def has_duplicates(lst: list[Any]) -> bool:
     return len(lst) != len(set(lst))
 
 
-def linspace(a, b, n):
-    delta = (b - a) / (n - 1)
+def linspace(a: float, b: float, n: int) -> list[float]:
+    delta: float = (b - a) / (n - 1)
     return [a + i * delta for i in range(n)]
 
 
-def sort_by_column(matrix, col):
-    matrix.sort(key=lambda x: x[col])
+def sort_by_column(table: list[list[Any]], col: int) -> None:
+    table.sort(key=lambda x: x[col])
+
+
+def transpose(table: list[list[Any]]) -> list[list[Any]]:
+    return [list(row) for row in zip_longest(*table)]
 
 
 def equally_spaced(lst):
@@ -38,35 +61,16 @@ def equally_spaced(lst):
     return all(math.isclose(lst[i] - lst[i - 1], diff) for i in range(2, len(lst)))
 
 
-def print_methods_diffs(diffs_dict):
-    if len(diffs_dict) < 2:
-        return
-    was = []
-    print()
-    for key1 in diffs_dict:
-        for key2 in diffs_dict:
-            diff = diffs_dict[key1] - diffs_dict[key2]
-            if key1 != key2 and f'({key2}) и ({key1})' not in was:
-                was.append(f'({key1}) и ({key2})')
-                print(f"Разница между ({key1}) и ({key2}): {abs(diff)}")
-
-
-def extend_finite_diffs(matrix, x_values):
-    extended_finite_diffs = []
-
-    for i, row in enumerate(matrix):
-        new_row = [i] + [x_values[i]] + row
-        extended_finite_diffs.append(new_row)
-
-    labels = ['i', 'x']
-    for i in range(len(matrix)):
-        if i == 0:
-            labels.append('y')
-        elif i == 1:
-            labels.append('Δy')
-        else:
-            labels.append(f'Δy^{i}')
-
-    extended_finite_diffs.insert(0, labels)
-
-    return extended_finite_diffs
+def table_to_string(data: list[Any],
+                    headers: list[Any],
+                    table_format: str = 'fancy_grid',
+                    float_format: str = '.5f',
+                    align: str = 'decimal',
+                    show_index: bool = True) -> str:
+    table: str = tabulate(data,
+                          headers=headers,
+                          tablefmt=table_format,
+                          floatfmt=float_format,
+                          numalign=align,
+                          showindex=show_index)
+    return table
